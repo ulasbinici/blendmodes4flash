@@ -1,0 +1,164 @@
+/*	
+.__       _____   ____    ______      ______   __  __     
+/\ \     /\  __`\/\  _`\ /\__  _\    /\__  _\ /\ \/\ \    
+\ \ \    \ \ \/\ \ \,\L\_\/_/\ \/    \/_/\ \/ \ \ `\\ \   
+.\ \ \  __\ \ \ \ \/_\__ \  \ \ \       \ \ \  \ \ , ` \  
+..\ \ \L\ \\ \ \_\ \/\ \L\ \ \ \ \       \_\ \__\ \ \`\ \ 
+...\ \____/ \ \_____\ `\____\ \ \_\      /\_____\\ \_\ \_\
+....\/___/   \/_____/\/_____/  \/_/      \/_____/ \/_/\/_/
+	                                                          
+	                                                          
+.______  ____    ______  ______   _____   __  __  ____    ____     ____    ______   ____    ______   
+/\  _  \/\  _`\ /\__  _\/\__  _\ /\  __`\/\ \/\ \/\  _`\ /\  _`\  /\  _`\ /\__  _\ /\  _`\ /\__  _\  
+\ \ \L\ \ \ \/\_\/_/\ \/\/_/\ \/ \ \ \/\ \ \ `\\ \ \,\L\_\ \ \/\_\\ \ \L\ \/_/\ \/ \ \ \L\ \/_/\ \/  
+.\ \  __ \ \ \/_/_ \ \ \   \ \ \  \ \ \ \ \ \ , ` \/_\__ \\ \ \/_/_\ \ ,  /  \ \ \  \ \ ,__/  \ \ \  
+..\ \ \/\ \ \ \L\ \ \ \ \   \_\ \__\ \ \_\ \ \ \`\ \/\ \L\ \ \ \L\ \\ \ \\ \  \_\ \__\ \ \/    \ \ \ 
+...\ \_\ \_\ \____/  \ \_\  /\_____\\ \_____\ \_\ \_\ `\____\ \____/ \ \_\ \_\/\_____\\ \_\     \ \_\
+....\/_/\/_/\/___/    \/_/  \/_____/ \/_____/\/_/\/_/\/_____/\/___/   \/_/\/ /\/_____/ \/_/      \/_/
+
+    
+Copyright (c) 2009 Lost In Actionscript - Shane McCartney
+
+Permission is hereby granted, free of charge, to any person obtaining a copy
+of this software and associated documentation files (the "Software"), to deal
+in the Software without restriction, including without limitation the rights
+to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+copies of the Software, and to permit persons to whom the Software is
+furnished to do so, subject to the following conditions:
+
+The above copyright notice and this permission notice shall be included in
+all copies or substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
+THE SOFTWARE.
+
+*/
+
+<languageVersion : 1.0;>
+
+kernel BlendModeVividlight
+<   namespace : "blendmodes";
+    vendor : "Lost In Actionscript - Shane McCartney";
+    version : 1;
+    description : "This blend mode specifically dodges or burns the colors on the bottom layer. If the top color is darker or lighter than midgray, contrast in the bottom layer will increase or decrease.";
+>
+{
+    input image4 src1;
+    input image4 src2;
+    
+    parameter float alpha
+    <defaultValue:float(1.0);>;
+
+    parameter float multiply
+    <defaultValue:float(1.0);
+    minValue:float(1.0);
+    maxValue:float(10.0);>;
+    
+    output pixel4 dst;
+
+    void
+    evaluatePixel()
+    {
+        float2 uv = outCoord();
+
+        float4 src1Rgba = sampleLinear(src1, uv);
+       	float4 src2Rgba = sampleLinear(src2, uv);
+       	
+        float src1Alpha = src1Rgba.a;
+        float src2Alpha = src2Rgba.a;
+        
+        if(src1Alpha>0.0) src1Rgba.rgb *= 1.0/src1Alpha;
+        if(src2Alpha>0.0) src2Rgba.rgb *= 1.0/src2Alpha;
+        
+        float4 rgba = float4(src2Rgba.r,src2Rgba.g,src2Rgba.b,src2Alpha);
+        
+        if(src1Alpha > 0.0){
+        
+        	float r;
+        	float g;
+        	float b;
+
+            if(src2Rgba.r < 0.5) {
+            	r = 2.0*src2Rgba.r;
+            	
+            	if(r > 0.0) {
+            		rgba.r = 1.0-(1.0 - src1Rgba.r)/r;
+            	} else {
+            		rgba.r = r;
+            	}
+            } else {
+            	r = 2.0*(src2Rgba.r - 0.5);
+            	
+            	if(r < 1.0) {
+            		rgba.r = src1Rgba.r / (1.0 - r);
+            	} else {
+            		rgba.r = r;
+            	}
+            }
+
+            if(src2Rgba.g < 0.5) {
+            	g = 2.0*src2Rgba.g;
+            	
+            	if(g > 0.0) {
+               		rgba.g = 1.0-((1.0 - src1Rgba.g)/g);
+               	} else {
+            		rgba.g = g;
+            	}
+            } else {
+            	g = 2.0*(src2Rgba.g - 0.5);
+            	
+            	if(g < 1.0) {
+                	rgba.g = src1Rgba.g / (1.0 - g);
+                } else {
+            		rgba.g = g;
+            	}
+            }
+            
+            if(src2Rgba.b < 0.5) {
+                b = 2.0*src2Rgba.b;
+                
+                if(b > 0.0) {
+               		rgba.b = 1.0-((1.0 - src1Rgba.b)/b);
+               	} else {
+            		rgba.b = b;
+            	}
+            } else {
+                b = 2.0*(src2Rgba.b - 0.5);
+                
+                if(b < 1.0) {
+               		rgba.b = src1Rgba.b / (1.0 - b);
+               	} else {
+            		rgba.b = b;
+            	}
+            }
+            
+        }
+        
+       	float3 minRgb = float3(0.0, 0.0, 0.0);
+        float3 maxRgb = float3(1.0, 1.0, 1.0);
+        
+        rgba.rgb = clamp(rgba.rgb, minRgb, maxRgb);
+        rgba.rgb*=rgba.a;
+        
+        float interpolateAlpha = alpha;
+        float inverseAlpha = 1.0-interpolateAlpha;
+        
+        rgba.rgb *= multiply;
+        
+        rgba.rgb = rgba.rgb*interpolateAlpha+src2Rgba.rgb*src2Alpha*inverseAlpha;
+        rgba.rgb = clamp(rgba.rgb, minRgb, maxRgb);
+        
+        interpolateAlpha = src2Rgba.a;
+        inverseAlpha = 1.0-interpolateAlpha;
+
+        dst.rgb = rgba.rgb+src1Rgba.rgb*inverseAlpha;
+        dst.rgb = clamp(dst.rgb, minRgb, maxRgb);
+        
+        dst.a = min(1.0, src1Alpha+src2Alpha);
+    }
+}

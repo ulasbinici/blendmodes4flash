@@ -20,6 +20,7 @@ myDisplayObject.blendShader = BlendModeShader.SOFTLIGHT;
 2) Using constructed instances of custom blend modes
 {{{
 import flash.display.BlendModeShader;
+import flash.display.shaders.*;
 
 myDisplayObject.blendShader = new BlendModeSoftlight();
 }}}
